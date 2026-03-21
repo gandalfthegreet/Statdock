@@ -1,0 +1,9 @@
+# Built bundle (run `make app`) — keep Dist/ in repo with README; don’t commit the binary
+Dist/Statdock.app/
+Dist/*.dmg
+
+.build/
+.swiftpm/
+.DS_Store
+*.xcodeproj/
+xcuserdata/
