@@ -1,10 +1,4 @@
-import AppKit
 import SwiftUI
-
-extension Notification.Name {
-    /// Opens the AppKit settings window (`AppDelegate.openSettings`).
-    static let statdockOpenSettings = Notification.Name("statdock.openSettings")
-}
 
 @main
 struct StatdockApp: App {
@@ -21,9 +15,5 @@ struct StatdockApp: App {
                 .environmentObject(AppSettings.shared)
         }
         .menuBarExtraStyle(.window)
-
-        Settings {
-            EmptyView()
-        }
     }
 }

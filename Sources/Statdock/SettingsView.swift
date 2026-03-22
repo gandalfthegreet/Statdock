@@ -43,15 +43,7 @@ struct SettingsView: View {
 
             Section("Menu bar") {
                 Toggle("Show live numbers next to the icon", isOn: $settings.menuBarLiveInfoEnabled)
-                Text("When off, only the chart icon is shown. Turn off Dock below and close Settings to run menu bar only (no Dock icon).")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-                    .fixedSize(horizontal: false, vertical: true)
-            }
-
-            Section("Dock") {
-                Toggle("Show live info on Dock icon", isOn: $settings.dockTileEnabled)
-                Text("Off: menu bar only (no Dock icon), unless Settings is open. On: live stats on the app icon and Statdock stays in the Dock.")
+                Text("When off, only the chart icon is shown. Statdock runs menu-bar only; the Dock icon appears only while this Settings window is open.")
                     .font(.caption)
                     .foregroundStyle(.secondary)
                     .fixedSize(horizontal: false, vertical: true)
@@ -91,7 +83,7 @@ struct SettingsView: View {
 
     private var layoutLegend: String {
         """
-        Choose any combination. These values appear in the menu bar (when enabled above) and on the Dock tile.
+        Choose any combination. These values appear in the menu bar when live numbers are enabled.
 
         CPU — total usage (%). Memory — % of system RAM in use. Battery — charge % (— if unknown). Network — ↓ download / ↑ upload (distinct from the percentage metrics).
         """

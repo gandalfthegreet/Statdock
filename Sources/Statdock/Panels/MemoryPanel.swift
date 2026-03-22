@@ -5,9 +5,16 @@ struct MemoryPanel: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: Theme.spacing) {
-            Text("MEMORY")
-                .font(Theme.Typography.caption)
-                .foregroundStyle(.secondary)
+            VStack(alignment: .leading, spacing: 6) {
+                Label("Memory", systemImage: "memorychip")
+                    .font(Theme.Typography.title)
+                    .foregroundStyle(.secondary)
+                Text("\(Int(metrics.memoryPercent))%")
+                    .font(Theme.Typography.metric)
+                    .foregroundStyle(Theme.ColorPalette.memory)
+            }
+            .padding(12)
+            .statdockSectionCard()
 
             VStack(alignment: .leading, spacing: 4) {
                 memoryRow("Total", byteString(metrics.totalMemoryBytes))
@@ -17,40 +24,45 @@ struct MemoryPanel: View {
                 memoryRow("Compression", compressionLabel(metrics.memoryCompressionRatio))
                 pressureRow
             }
+            .padding(12)
+            .statdockSectionCard()
 
-            Text("TOP BY MEMORY")
-                .font(Theme.Typography.caption)
-                .foregroundStyle(.secondary)
-                .padding(.top, 6)
+            VStack(alignment: .leading, spacing: 6) {
+                Label("Top by Memory", systemImage: "list.bullet.rectangle")
+                    .font(Theme.Typography.title)
+                    .foregroundStyle(.secondary)
 
-            ForEach(metrics.topMemory) { row in
-                HStack(alignment: .center, spacing: 6) {
-                    Text(row.name)
-                        .font(Theme.Typography.row)
-                        .foregroundStyle(.primary)
-                        .lineLimit(1)
-                    Spacer(minLength: 4)
-                    Text(byteString(row.residentBytes))
-                        .font(Theme.Typography.row)
-                        .foregroundStyle(Theme.ColorPalette.accent)
-                        .monospacedDigit()
-                    if AppProcessTermination.canRequestTermination(pid: row.id) {
-                        Menu {
-                            Button("Quit") { AppProcessTermination.terminate(pid: row.id) }
-                            Button("Force Quit", role: .destructive) {
-                                AppProcessTermination.forceTerminate(pid: row.id)
+                ForEach(metrics.topMemory) { row in
+                    HStack(alignment: .center, spacing: 6) {
+                        Text(row.name)
+                            .font(Theme.Typography.row)
+                            .foregroundStyle(.primary)
+                            .lineLimit(1)
+                        Spacer(minLength: 4)
+                        Text(byteString(row.residentBytes))
+                            .font(Theme.Typography.row)
+                            .foregroundStyle(Theme.ColorPalette.accent)
+                            .monospacedDigit()
+                        if AppProcessTermination.canRequestTermination(pid: row.id) {
+                            Menu {
+                                Button("Quit") { AppProcessTermination.terminate(pid: row.id) }
+                                Button("Force Quit", role: .destructive) {
+                                    AppProcessTermination.forceTerminate(pid: row.id)
+                                }
+                            } label: {
+                                Image(systemName: "ellipsis.circle")
+                                    .font(.system(size: 13))
+                                    .foregroundStyle(.secondary)
                             }
-                        } label: {
-                            Image(systemName: "ellipsis.circle")
-                                .font(.system(size: 13))
-                                .foregroundStyle(.secondary)
+                            .menuStyle(.borderlessButton)
+                            .fixedSize()
                         }
-                        .menuStyle(.borderlessButton)
-                        .fixedSize()
                     }
+                    .padding(.vertical, 4)
                 }
-                .padding(.vertical, 4)
             }
+            .padding(12)
+            .statdockSectionCard()
         }
     }
 

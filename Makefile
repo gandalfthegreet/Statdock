@@ -7,8 +7,11 @@ BUILD = .build/release/$(APP_NAME)
 APP_DIR = $(CURDIR)/Dist/$(APP_NAME).app
 VERSION = $(shell /usr/libexec/PlistBuddy -c 'Print CFBundleShortVersionString' "$(CURDIR)/Info.plist" 2>/dev/null || echo 0.1.0)
 DMG = $(CURDIR)/Dist/$(APP_NAME)-$(VERSION).dmg
+ENTITLEMENTS = $(CURDIR)/Statdock.entitlements
+PACKAGE_DMG = $(CURDIR)/scripts/package-dmg.sh
+APP_ICON = $(CURDIR)/Resources/AppIcon.icns
 
-.PHONY: build release app dmg clean
+.PHONY: build release assemble-app app dmg dist clean
 
 release:
 	swift build -c release
@@ -16,24 +19,45 @@ release:
 build:
 	swift build
 
-app: release
+# Copy binary + Info.plist (unsigned)
+assemble-app: release
 	rm -rf "$(APP_DIR)"
-	mkdir -p "$(APP_DIR)/Contents/MacOS"
+	mkdir -p "$(APP_DIR)/Contents/MacOS" "$(APP_DIR)/Contents/Resources"
 	cp "$(BUILD)" "$(APP_DIR)/Contents/MacOS/"
 	cp Info.plist "$(APP_DIR)/Contents/Info.plist"
+	cp "$(APP_ICON)" "$(APP_DIR)/Contents/Resources/AppIcon.icns"
+
+# Local dev: ad-hoc signed .app (Gatekeeper may still prompt on quarantined copies)
+app: assemble-app
+	codesign --force --deep --sign - "$(APP_DIR)"
 	@echo "Built: $(APP_DIR)"
 	@echo "Open this folder in Finder, or: open \"$(APP_DIR)\""
 
-# Compressed disk image for hosting (e.g. GitHub Releases). Drag Statdock.app → Applications.
+# Dev DMG (ad-hoc app inside). For downloads that open without warnings, use `make dist`.
 dmg: app
-	@set -e; \
-	STAGE=$$(mktemp -d); \
-	trap 'rm -rf "$$STAGE"' EXIT; \
-	cp -R "$(APP_DIR)" "$$STAGE/"; \
-	ln -sf /Applications "$$STAGE/Applications"; \
-	rm -f "$(DMG)"; \
-	hdiutil create -volname "$(APP_NAME) $(VERSION)" -srcfolder "$$STAGE" -ov -format UDZO "$(DMG)"; \
-	echo "DMG: $(DMG)"
+	chmod +x "$(PACKAGE_DMG)"
+	"$(PACKAGE_DMG)" "$(APP_DIR)" "$(DMG)" "$(APP_NAME) $(VERSION)"
+	@echo "DMG (not notarized): $(DMG)"
+
+# Release DMG: Developer ID + hardened runtime + notarize + staple (requires Apple Developer Program).
+#   export CODESIGN_IDENTITY='Developer ID Application: …'
+#   export NOTARY_PROFILE=statdock-notary
+# See DISTRIBUTION.md
+dist: assemble-app
+ifndef CODESIGN_IDENTITY
+	$(error CODESIGN_IDENTITY is not set. Export your "Developer ID Application" identity. See DISTRIBUTION.md)
+endif
+ifndef NOTARY_PROFILE
+	$(error NOTARY_PROFILE is not set. Run: xcrun notarytool store-credentials … See DISTRIBUTION.md)
+endif
+	codesign --force --options runtime --sign "$(CODESIGN_IDENTITY)" --entitlements "$(ENTITLEMENTS)" --deep "$(APP_DIR)"
+	codesign --verify --verbose=4 "$(APP_DIR)"
+	chmod +x "$(PACKAGE_DMG)"
+	"$(PACKAGE_DMG)" "$(APP_DIR)" "$(DMG)" "$(APP_NAME) $(VERSION)"
+	xcrun notarytool submit "$(DMG)" --keychain-profile "$(NOTARY_PROFILE)" --wait
+	xcrun stapler staple "$(DMG)"
+	xcrun stapler validate "$(DMG)"
+	@echo "Release DMG (signed + notarized + stapled): $(DMG)"
 
 clean:
 	swift package clean

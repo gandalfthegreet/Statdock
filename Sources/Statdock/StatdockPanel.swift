@@ -13,4 +13,14 @@ enum StatdockPanel: String, CaseIterable, Identifiable, Hashable {
     var windowTitle: String {
         "Statdock — \(rawValue)"
     }
+
+    var symbolName: String {
+        switch self {
+        case .overview: "square.grid.2x2"
+        case .cpu: "cpu"
+        case .memory: "memorychip"
+        case .battery: "battery.100"
+        case .network: "arrow.up.arrow.down"
+        }
+    }
 }

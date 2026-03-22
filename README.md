@@ -7,8 +7,8 @@
 | Topic | What |
 |-------|------|
 | **Menu bar** | Live numbers next to the chart icon (configurable metrics). Click the icon to open the main panel. |
-| **Settings** | Appearance, adaptive vs fixed refresh interval, **menu bar numbers** on/off, **Dock live tile** on/off, **CPU / Memory / Battery / Network** toggles (any combination), open at login. |
-| **Dock** | Optional live overlay and badge on the app icon when enabled; turn off for **menu bar only** (no Dock icon when Settings is closed). |
+| **Settings** | Appearance, adaptive vs fixed refresh interval, **menu bar numbers** on/off, **CPU / Memory / Battery / Network** toggles (any combination), open at login. |
+| **Dock** | Hidden during normal use. Statdock appears in the Dock only while the Settings window is open. |
 | **Data** | IOKit (battery), host CPU and **libproc** (CPU, processes, resident memory), interface throughput, **`/usr/bin/nettop`** for per-process network. |
 | **Adaptive polling** | ~2 s while load or values are changing, up to ~30 s when stable (Settings). |
 
@@ -39,18 +39,43 @@ swift build -c release --arch arm64 --arch x86_64
 
 ## Distribution (DMG)
 
+**Release DMGs are certified for distribution:** they are **Developer ID–signed**, **notarized by Apple**, and **ticket-stapled**, so Gatekeeper treats them as verified software from a known developer.
+
+**For a public download that opens without Gatekeeper friction**, ship the artifact produced by **`make dist`** (not the ad-hoc `make dmg` output). That path requires an **Apple Developer Program** membership and a one-time machine setup.
+
+```bash
+export CODESIGN_IDENTITY='Developer ID Application: Your Name (TEAMID)'
+export NOTARY_PROFILE=statdock-notary   # from: xcrun notarytool store-credentials …
+
+make dist
+```
+
+This writes **`Dist/Statdock-<version>.dmg`** and runs Apple’s notary service + `stapler`. Upload **that** file to GitHub Releases (or your host). Full steps: **[DISTRIBUTION.md](DISTRIBUTION.md)**.
+
+**Local / dev only** (ad-hoc signed app; **not** suitable as a frictionless download):
+
 ```bash
 make dmg
 ```
 
-Produces **`Dist/Statdock-<version>.dmg`** (version from `CFBundleShortVersionString` in `Info.plist`), with **`Statdock.app`** and a shortcut to **Applications** for drag-to-install. Upload for GitHub Releases or similar.
-
-First launch on other Macs may require **Control-click → Open** if the app is not signed and notarized.
+Recipients of a **non-notarized** DMG may need **Right‑click → Open** once, or clear quarantine with `xattr` (see [DISTRIBUTION.md](DISTRIBUTION.md)).
 
 ## Usage
 
 - **Menu bar**: Click the **chart** icon to open the panel. Use the **gear** in the panel (or **⌘,**) for Settings.
 - **Quit**: **⌘Q** while Statdock is focused, or from the system’s app menu when the Settings window is key.
+
+### Runs on its own (not tied to Cursor or any IDE)
+
+Statdock does **not** depend on **Cursor** or any IDE when you open **`Statdock.app`** from Finder or the Dock. (If you **only** run it from a terminal, that process can exit when the terminal session ends—use Finder or **`open -a Statdock`** for a normal long‑running install, and **Open at login** in Settings if you want.)
+
+If the **Applications** copy won’t open but a **repo** copy does, that’s usually **Gatekeeper** on a downloaded install — ship **`make dist`** (see [DISTRIBUTION.md](DISTRIBUTION.md)), not Cursor.
+
+If you do not see the chart icon, check the menu bar **overflow** (») on notched Macs, or menu bar tools (Bartender, Ice, etc.).
+
+### Menu bar in System Settings (ghost rows)
+
+The menu bar extra is implemented with SwiftUI **`MenuBarExtra`** so it registers with the system the same way Apple’s templates do. If **Allow in the Menu Bar** still lists **stale Statdock rows** you cannot delete, that state lives in system preferences (not your project folder); **Reset Control Centre** does not always clear it on recent macOS versions. As a last resort you can change **`CFBundleIdentifier`** in `Info.plist` for one release so macOS treats the app as a new registration (you’ll get a fresh row; old ghosts may remain until Apple fixes the database).
 
 ## Permissions
 

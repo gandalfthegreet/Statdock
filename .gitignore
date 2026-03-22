@@ -1,4 +1,4 @@
-# Built bundle (run `make app`) — keep Dist/ in repo with README; don’t commit the binary
+# Built bundle (run `make app`) — don’t commit the binary or DMG artifacts
 Dist/Statdock.app/
 Dist/*.dmg
 

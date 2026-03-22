@@ -12,6 +12,7 @@ enum Theme {
     }
 
     enum Typography {
+        static let header = Font.system(size: 15, weight: .semibold, design: .rounded)
         static let title = Font.system(size: 13, weight: .semibold, design: .rounded)
         static let metric = Font.system(size: 28, weight: .bold, design: .rounded)
         static let caption = Font.system(size: 10, weight: .medium, design: .rounded)
@@ -20,6 +21,7 @@ enum Theme {
 
     static let cornerRadius: CGFloat = 12
     static let spacing: CGFloat = 8
+    static let sectionRadius: CGFloat = 14
 
     static func throughputString(_ bps: Double) -> String {
         if bps >= 1_048_576 { return String(format: "%.1f MB/s", bps / 1_048_576) }
@@ -39,5 +41,10 @@ extension View {
             RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
                 .strokeBorder(Color.primary.opacity(0.10), lineWidth: 1)
         }
+    }
+
+    func statdockSectionCard() -> some View {
+        statdockGlassTile(cornerRadius: Theme.sectionRadius)
+            .padding(.bottom, 2)
     }
 }

@@ -7,11 +7,13 @@
 	<key>CFBundleExecutable</key>
 	<string>Statdock</string>
 	<key>CFBundleIdentifier</key>
-	<string>com.statdock.app</string>
+	<string>com.oakleytong.statdock</string>
 	<key>CFBundleInfoDictionaryVersion</key>
 	<string>6.0</string>
 	<key>CFBundleName</key>
 	<string>Statdock</string>
+	<key>CFBundleIconFile</key>
+	<string>AppIcon</string>
 	<key>CFBundlePackageType</key>
 	<string>APPL</string>
 	<key>CFBundleShortVersionString</key>

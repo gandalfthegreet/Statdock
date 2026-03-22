@@ -1,7 +1,8 @@
 import AppKit
+import Darwin
 import SwiftUI
 
-/// Menu bar UI is SwiftUI `MenuBarExtra` in `StatdockApp`. This delegate owns Dock tile, settings window, and metrics.
+/// Owns Dock tile, settings window, and metrics. Menu bar UI is SwiftUI `MenuBarExtra` in `StatdockApp`.
 @MainActor
 final class AppDelegate: NSObject, NSApplicationDelegate {
     private var keyDownMonitor: Any?
@@ -11,11 +12,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var dockTileView: DockTileNSView?
     private var dockRedrawTimer: Timer?
 
-    func applicationDidFinishLaunching(_ notification: Notification) {
-        let initialPolicy: NSApplication.ActivationPolicy =
-            AppSettings.shared.dockTileEnabled ? .regular : .accessory
-        _ = NSApp.setActivationPolicy(initialPolicy)
+    func applicationWillFinishLaunching(_ notification: Notification) {
+        signal(SIGHUP, SIG_IGN)
+        _ = NSApp.setActivationPolicy(.accessory)
+    }
 
+    func applicationDidFinishLaunching(_ notification: Notification) {
         if let bid = Bundle.main.bundleIdentifier {
             let mine = ProcessInfo.processInfo.processIdentifier
             let siblings = NSRunningApplication.runningApplications(withBundleIdentifier: bid)
@@ -63,18 +65,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     @objc private func applyDockTileSettings() {
-        let s = AppSettings.shared
         updateActivationPolicyForAuxiliaryWindows()
-
-        if s.dockTileEnabled {
-            DispatchQueue.main.async { [weak self] in
-                self?.rebuildDockTileContent()
-                self?.startDockRedrawTimer()
-            }
-        } else {
-            stopDockRedrawTimer()
-            clearDockTileContent()
-        }
+        stopDockRedrawTimer()
+        clearDockTileContent()
     }
 
     private func rebuildDockTileContent() {
@@ -137,7 +130,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     private func updateActivationPolicyForAuxiliaryWindows() {
-        let needRegular = settingsWindow?.isVisible == true || AppSettings.shared.dockTileEnabled
+        let needRegular = settingsWindow?.isVisible == true
         let target: NSApplication.ActivationPolicy = needRegular ? .regular : .accessory
         guard NSApp.activationPolicy() != target else {
             if needRegular {

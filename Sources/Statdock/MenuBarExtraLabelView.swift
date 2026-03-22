@@ -4,6 +4,12 @@ import SwiftUI
 struct MenuBarExtraLabelView: View {
     @EnvironmentObject private var metrics: MetricsStore
     @EnvironmentObject private var settings: AppSettings
+    
+    private struct MetricSegment: Identifiable {
+        let id: String
+        let value: String
+        let accessibility: String
+    }
 
     var body: some View {
         Group {
@@ -13,14 +19,14 @@ struct MenuBarExtraLabelView: View {
                         .symbolRenderingMode(.hierarchical)
                         .imageScale(.small)
                     if settings.metricVisibility.anyEnabled {
-                        Text(line)
+                        Text(menuBarLine)
                             .font(.system(size: 11, weight: .semibold, design: .rounded))
                             .monospacedDigit()
                             .lineLimit(1)
                             .minimumScaleFactor(0.65)
                     }
                 }
-                .accessibilityLabel(settings.metricVisibility.anyEnabled ? "Statdock, \(line)" : "Statdock")
+                .accessibilityLabel(settings.metricVisibility.anyEnabled ? "Statdock, \(accessibilityLine)" : "Statdock")
             } else {
                 Image(systemName: "chart.xyaxis.line")
                     .symbolRenderingMode(.hierarchical)
@@ -29,23 +35,45 @@ struct MenuBarExtraLabelView: View {
         }
     }
 
-    private var line: String {
+    private var metricSegments: [MetricSegment] {
         let v = settings.metricVisibility
-        var parts: [String] = []
+        var parts: [MetricSegment] = []
         if v.cpu {
-            parts.append("CPU \(Int(metrics.cpuTotal))%")
+            let value = "\(Int(metrics.cpuTotal))%"
+            parts.append(MetricSegment(id: "cpu", value: "CPU \(value)", accessibility: "CPU \(value)"))
         }
         if v.memory {
-            parts.append("MEM \(Int(metrics.memoryPercent))%")
+            let value = "\(Int(metrics.memoryPercent))%"
+            parts.append(MetricSegment(id: "memory", value: "MEM \(value)", accessibility: "Memory \(value)"))
         }
         if v.battery {
-            parts.append("BAT " + (metrics.batteryInfo.map { "\($0.percent)%" } ?? "—"))
+            let value = metrics.batteryInfo.map { "\($0.percent)%" } ?? "—"
+            parts.append(MetricSegment(id: "battery", value: "BAT \(value)", accessibility: "Battery \(value)"))
         }
         if v.network {
-            let d = Theme.throughputString(metrics.networkDownBps)
-            let u = Theme.throughputString(metrics.networkUpBps)
-            parts.append("↓\(d) ↑\(u)")
+            let d = compactThroughputString(metrics.networkDownBps)
+            let u = compactThroughputString(metrics.networkUpBps)
+            let value = "NET \(d)/\(u)"
+            parts.append(MetricSegment(id: "network", value: value, accessibility: "Network down \(d), up \(u)"))
         }
-        return parts.joined(separator: " · ")
+        return parts
+    }
+
+    private var menuBarLine: String {
+        metricSegments.map(\.value).joined(separator: " · ")
+    }
+
+    private var accessibilityLine: String {
+        metricSegments.map(\.accessibility).joined(separator: ", ")
+    }
+
+    private func compactThroughputString(_ bps: Double) -> String {
+        if bps >= 1_048_576 {
+            return String(format: "%.1fM", bps / 1_048_576)
+        }
+        if bps >= 1024 {
+            return String(format: "%.0fK", bps / 1024)
+        }
+        return String(format: "%.0fB", bps)
     }
 }
